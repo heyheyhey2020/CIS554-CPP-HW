@@ -1,0 +1,212 @@
+//HW2 by Can Luo
+//SU Net ID: cluo13  SUID: 9431393361
+
+//HW2
+//Due: Wednesday (Feb. 5) at 11:59PM
+#include <iostream>
+
+using namespace std;
+int m = 50;
+class Node {
+public:
+    int value;
+    Node* l_child;
+    Node* r_child;
+    Node* parent;
+    Node() : l_child(nullptr), r_child(nullptr), parent(nullptr) {}
+    Node(int i) :value(i), l_child(nullptr), r_child(nullptr), parent(nullptr) {}
+};
+
+class Tree { //an n-level full binary tree of 2^n - 1 nodes
+public:
+    Node* root;
+    int level;
+    Tree() : root(nullptr), level(0) {}
+    Node* makeTree(int n);
+    void printTree1(Node* p);
+    void printTree2(Node* p);
+    void printTree3(Node* p);
+
+//*************
+//Implement the following 4 member functions using recursion.
+    int numOdds(Node* p);//Return the number of odd numbers in the subtree rooted at node pointed by p
+    Node* SymCopy(Node* p);//Create a tree symmetric to the subtree rooted at node pointed by p
+    bool Find(Node* p, int k);//Return true if value k exists in the subtree rooted at node pointed by p, else return false
+    int LeftHeavy(Node* p); //For all nodes in the subtree rooted by a node pointed by p,
+                            //re-structure the tree such that
+                            //sum of left child branch is >= sum of right child branch.
+                            //In addition, return the sum of all nodes in the subtree rooted by the node pointed by p.
+
+
+//***********
+//Implement the following function. You are not required to use recursion for this implementation.
+    void makeMaxHeap(Node* p);  //Re-structure the subtree rooted at a node pointed by p such that
+                                //the subtree is a max heap.
+                                //Remember that a tree is a max heap if all nodes in the tree satisfy the property
+                                //that (value of left child <= value of parent) and (value of right child <= value of parent).
+};
+
+Node* Tree::makeTree(int n) { //Create an n-level full binary tree with random values between 0 ... m-1
+    Node* p = new Node(rand() % m);
+    if (n == 1) return p;
+    p->l_child = makeTree(n - 1);
+    p->l_child->parent = p;
+    p->r_child = makeTree(n - 1);
+    p->r_child->parent = p;
+    return p;
+}
+
+void Tree::printTree1(Node* p) { //in-order printing
+    if (p == nullptr) return;
+    printTree1(p->l_child);
+    cout << p->value << " ";
+    printTree1(p->r_child);
+}
+
+void Tree::printTree2(Node* p) { //pre-order printing
+
+    if (p == nullptr) return;
+    cout << p->value << " ";
+    printTree2(p->l_child);
+    printTree2(p->r_child);
+}
+void Tree::printTree3(Node* p) { //post-order printing
+    if (p == nullptr) return;
+    printTree3(p->l_child);
+    printTree3(p->r_child);
+    cout << p->value << " ";
+}
+
+int Tree::numOdds(Node* p) {
+    if(p== nullptr) return 0;
+//    int temp = p->value;
+    int left = numOdds(p->l_child);
+    int right = numOdds(p->r_child);
+    bool i = 0;
+    if(p->value%2 != 0) {i=1;}
+    int count = left + right + i;
+    return count;
+}
+
+Node* Tree::SymCopy(Node* p) { //reference website: https://blog.csdn.net/qq_29762941/article/details/80909342
+    if(p== nullptr) return p;
+//    int tempNum = p->value;
+    SymCopy(p->l_child);
+    SymCopy(p->r_child);
+    Node* temp = p->l_child;
+    p->l_child= p->r_child;
+    p->r_child = temp;
+    return p;
+}
+
+bool Tree::Find(Node* p, int k) {
+    if(p== nullptr) return false;
+    bool i1 = 0;
+    bool i2 = 0;
+    bool i3 = 0;
+    if(p->value == k){
+        i1 = 1;
+    }
+    i2 = Find(p->l_child,k);
+    i3 = Find(p->r_child,k);
+    bool i = i1 || i2 || i3;
+    return i;
+}
+
+int Tree::LeftHeavy(Node* p) {
+    if(p== nullptr) return 0;
+    int tempNum = p->value;
+    int sum1 = LeftHeavy(p->l_child);
+    int sum2 = LeftHeavy(p->r_child);
+    if (sum1 < sum2) {
+        Node* temp = p->l_child;
+        p->l_child = p->r_child;
+        p->r_child = temp;
+    }
+    int sum3 = sum1+sum2 + p->value;
+    return sum3;
+}
+
+void Tree::makeMaxHeap(Node* p) {
+    if(p== nullptr) return;
+    if(p->l_child== nullptr || p->r_child == nullptr) return;
+    makeMaxHeap(p->l_child);
+    makeMaxHeap(p->r_child);
+    int parent = p->value;
+    int lchild = p->l_child->value;
+    int rchild = p->r_child->value;
+    int temp;
+    if (lchild > parent){
+        //swap value
+        temp = p->l_child->value;
+        p->l_child->value = p->value;
+        p->value = temp;
+        // update value for r-child's comparision.
+        parent = p->value;
+        lchild = p->l_child->value;
+        rchild = p->r_child->value;
+    }
+    if (rchild > parent){
+        //swap value
+        temp = p->r_child->value;
+        p->r_child->value = p->value;
+        p->value = temp;
+    }
+    // check that max heap still hold after swapping value, if not, swap it leave again
+    if(p->l_child->l_child != nullptr || p->l_child->r_child != nullptr) {
+        if(p->l_child->l_child->value > p->l_child->value || p->l_child->r_child->value > p->l_child->value ){
+            makeMaxHeap(p->l_child);
+        }
+    }
+    if(p->r_child->l_child != nullptr || p->r_child->r_child != nullptr) {
+        if(p->r_child->l_child->value > p->r_child->value|| p->r_child->r_child->value > p->r_child->value ){
+            makeMaxHeap(p->r_child);
+        }
+    }
+}
+
+
+
+
+
+int main() {
+    Tree T1;
+    T1.root = T1.makeTree(4);
+    T1.printTree1(T1.root);
+    cout << endl;
+    T1.printTree2(T1.root);
+    cout << endl;
+    T1.printTree3(T1.root);
+    cout << endl;
+    cout << T1.numOdds(T1.root) << endl;
+
+    Tree T2;
+
+    T2.root = T1.SymCopy(T1.root);
+    T2.printTree1(T2.root);
+    cout << endl;
+    T2.printTree2(T2.root);
+    cout << endl;
+    T2.printTree3(T2.root);
+    cout << endl;
+
+    cout << T2.Find(T2.root, 7) << endl;
+
+    cout << T2.LeftHeavy(T2.root) << endl;
+
+    T2.printTree1(T2.root);
+    cout << endl;
+    T2.printTree2(T2.root);
+    cout << endl;
+    T2.printTree3(T2.root);
+    cout << endl;
+
+    T2.makeMaxHeap(T2.root);
+    T2.printTree1(T2.root);
+    cout << endl;
+    T2.printTree2(T2.root);
+    cout << endl;
+    T2.printTree3(T2.root);
+
+    return 0;
+}
