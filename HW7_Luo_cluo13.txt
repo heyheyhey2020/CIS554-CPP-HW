@@ -1,0 +1,318 @@
+//HW7 by Can Luo
+//SU Net ID: cluo13  SUID: 9431393361
+
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <map>
+#include <list>
+#include <cstdlib>
+
+using namespace std;
+
+class my_hash1 {
+public:
+    //implement h(sum of all matrix elements);
+    size_t operator() ( const vector<vector<int>>& V) const {
+        hash<int> h;
+        int sum = 0;
+        for (auto i : V){
+            for (auto j : i){
+                sum += j;
+            }
+        }
+        return h(sum);
+    }
+
+};
+
+class my_equal_to1 {
+public:
+    //equal sums and equal number of rows and equal number of columns
+    bool operator() (const vector<vector<int>>& V1, const vector<vector<int>>& V2) const{
+        int row1=0;
+        int row2=0;
+        int col1=0;
+        int col2=0;
+        int sum1 = 0;
+        int sum2 = 0;
+        for(auto i : V1){
+            row1 +=1;
+        }
+        for(auto i : V2){
+            row2 +=1;
+        }
+        if(row1 != row2) return false;
+
+        for (auto i : V1[0]){
+            col1 =+1;
+        }
+        for (auto i : V2[0]){
+            col2 =+1;
+        }
+        if(col1 != col2) return false;
+
+        for(auto i: V1){
+            for (auto j : i){
+                sum1 += j;
+            }
+        }
+        for(auto i: V2){
+            for (auto j : i){
+                sum2 += j;
+            }
+        }
+        return sum1 == sum2;
+
+    }
+
+};
+
+
+class myCompare1 {
+    //compare sums;
+public:
+    bool operator()(const list<int*>* L1, const list<int*>* L2) const {
+        int sum1 = 0;
+        int sum2 = 0;
+        for (auto i : *L1) {
+            sum1 += *i;
+        }
+        for (auto j : *L2) {
+            sum2 += *j;
+        }
+        return sum1 < sum2;
+    }
+};
+
+class my_hash2 {
+    //implement h(sum of all ints);
+public:
+    size_t operator() (const map<list<int*>*, vector<int*>, myCompare1>& M ) const{
+        hash<int> h;
+        int sum=0;
+        for (auto i : M) {
+            auto& L = *i.first;
+            auto& V = i.second;
+            for (auto a : L) {
+                sum += *a;
+            }
+            for (auto b : V) {
+                sum += *b;
+            }
+        }
+        return h(sum);
+    }
+};
+
+class my_equal_to2 {
+    //equal sums
+public:
+    bool operator() (const map<list<int*>*, vector<int*>, myCompare1>& M1, const map<list<int*>*, vector<int*>, myCompare1>& M2) const {
+        int sum1 = 0;
+        int sum2 = 0;
+        for (auto i : M1) {
+            auto& L = *i.first;
+            auto& V = i.second;
+            for (auto a : L) {
+                sum1 += *a;
+            }
+            for (auto b : V) {
+                sum1 += *b;
+            }
+        }
+        for (auto i : M2) {
+            auto& L = *i.first;
+            auto& V = i.second;
+            for (auto a : L) {
+                sum2 += *a;
+            }
+            for (auto b : V) {
+                sum2 += *b;
+            }
+        }
+        return sum1 == sum2;
+    }
+};
+
+//ostream& operator<<
+ostream& operator<< (ostream& str, unordered_map<vector<vector<int>>, int, my_hash1, my_equal_to1> HT){
+    for (auto i : HT){
+        for(auto j : i.first){ //i.first is a matrices
+            for( auto k : j){
+                str << k << " ";
+            }
+            str << endl;
+        }
+        str << i.second << endl;
+    }
+    return str;
+}
+
+//template <class T1, class T2> ostream & operator << (ostream& str, pair<T1, T2> it){
+//    auto& V = it.first;
+//    for(auto i : V){
+//        for(auto j : i){
+//            str << j << " ";
+//        }
+//        str << endl;
+//    }
+//    str << it.second;
+//    return str;
+//}
+ostream & operator << (ostream& str, pair<vector<vector<int>>, int> it){
+    auto& V = it.first;
+    for(auto i : V){
+        for(auto j : i){
+            str << j << " ";
+        }
+        str << endl;
+    }
+    str << it.second;
+    return str;
+}
+
+ostream& operator<< (ostream& str, unordered_map<map<list<int*>*, vector<int*>, myCompare1>, int, my_hash2, my_equal_to2>& HT){
+    str << "{ ";
+    for(auto i : HT){
+        auto& M = i.first;
+        str << "[ ";
+        for(auto j : M){
+            auto& L = *j.first;
+            auto& V = j.second;
+            str << "< ";
+            for(auto k : L){
+                str << *k << " ";
+            }
+            str << "> ";
+            str << "( ";
+            for(auto v : V){
+                str << *v << " ";
+            }
+            str << ") ";
+        }
+        str << "] ";
+        str << i.second << " ";
+    }
+    str << "} ";
+    return str;
+}
+
+//template <class T3> ostream & operator << (ostream& str, pair<T3, int>& it){
+//    auto& M = it.first;
+//    for( i : &M.first)
+//
+//
+//    str << it.second;
+//    return str;
+//}
+
+ostream & operator << (ostream& str, pair<map<list<int*>*, vector<int*>, myCompare1>, int> it){
+    auto& M = it.first;
+    str << "[ ";
+    for(auto i : M){
+        str << "< ";
+        for(auto j : *i.first){
+            str << *j << " ";
+        }
+        str << "> ";
+        str << "( ";
+        for(auto k : i.second){
+            str << *k << " ";
+        }
+        str << ") ";
+    }
+    str << "] ";
+    str << it.second;
+    return str;
+}
+
+
+int main() {
+    int n;
+    cin >> n; //input number matrices
+    vector<vector<vector<int>>> M(n);
+    //Do something here
+    //Create matrices for M[0] ... M[n-1]
+    //For each matrix, row number is a random number in 10 ... 30, column number is
+    //also a random number in 10 ... 30.
+    //For all matrices, elements are random numbers in 0 ... 99.
+
+    for(int count=0; count<n; count++){
+        int row = 10+(rand()%21);
+        int col = 10+(rand()%21);
+//        int row =2;
+//        int col =2;
+        vector<vector<int>> matrices;
+        for (int j=0; j<row; j++ ){
+            vector<int> line;
+            for (int k=0; k<col; k++){
+                line.push_back(rand()%100);
+            }
+            matrices.push_back(line);
+        }
+//        M.push_back(matrices);
+        M[count] = matrices;
+    }
+
+
+
+
+    //print M
+//    for(auto i: M){
+//        for(auto j: i){
+//            for(auto k : j){
+//                cout << k << " ";
+//            }
+//            cout << endl;
+//        }
+//        cout << endl;
+//        cout << endl;
+//    }
+
+
+
+
+
+    unordered_map<vector<vector<int>>, int, my_hash1, my_equal_to1> HT1;
+    for (int i = 0; i < n; i++) {
+        HT1.insert({ M[i], 1+rand()%n });
+    }
+    //Implement needed overloaded operator<<
+    cout << HT1 << endl;
+
+    //Implement needed overloaded operator<<
+    auto it = HT1.find(M[n-1]);
+    if (it != HT1.end()) {
+        cout << *it << endl;
+    }
+
+    unordered_map<map<list<int*>*, vector<int*>, myCompare1>, int, my_hash2, my_equal_to2> HT2;
+    //myCompare1 will compare the sums of all ints in keys -- means sum of list
+    //my_hash2 will be h(sums of all ints) -- list + vector + int
+    //my_equal_to2 will be equal in sums of keys -- means sum of map
+
+    map<list<int*>*, vector<int*>, myCompare1>
+            m1{ {
+                        { new list<int*>{new int{10}, new int{20}, new int{30} }   , {new int{20}, new int{40}}   },
+                        { new list<int*>{new int{40}, new int{20}, new int{30} }   , {new int{20}, new int{40}, new int{100}}   }
+                } },
+            m2{ {
+                        { new list<int*>{new int{10}, new int{20}, new int{30} }   , {new int{20}, new int{40}}   },
+                        { new list<int*>{new int{40}, new int{20}, new int{30} }   , {new int{20}, new int{40}, new int{200}}   }
+                } };
+
+
+    HT2.insert({ m1, 1 });
+    HT2.insert({ m2, 2 });
+
+    //Implement needed overloaded operator<<
+    cout << HT2 << endl;
+
+    auto it2 = HT2.find(m1);
+    //Implement needed overloaded operator<<
+    if (it2 != HT2.end())  cout << *it2 << endl;
+
+
+    return 0;
+}

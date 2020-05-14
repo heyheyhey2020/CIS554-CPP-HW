@@ -1,0 +1,419 @@
+//HW3 by Can Luo
+//SU Net ID: cluo13  SUID: 9431393361
+
+//HW3
+//Due: 11:59PM, February 21 (Friday)
+
+#include <iostream>
+#include <list>
+#include <map>
+#include <string>
+#include <tuple>
+#include <iomanip>
+using namespace std;
+
+class course {
+public:
+    string name;
+    int section;
+    int credits;
+    string grade;
+    course() {}
+    course(string n, int s, int c, string g) { name = n; section = s; credits = c; grade = g; }
+
+    //You might need to implement some overloaded operators here.
+    bool operator == (const course &c);
+    bool operator < (const course &c);
+    friend ostream & operator << (ostream& str, const course &course);
+};
+
+bool course::operator==(const class course &c) { // overloading == operator for finding course later.
+    return name == c.name;
+}
+bool course::operator<(const class course &c) { // overloading < operator for list sorting.
+    return name < c.name;
+}
+ostream & operator << (ostream& str, const course &c){
+    str << "(" << c.name << " " << c.section << " " << c.credits << " " << c.grade << ")";
+    return str;
+}
+bool compare(course* a, course* b) {return *a < *b;} // sort the course according to name;
+
+//Implement the following functions.
+
+//When adding a student, if the student is already in DB, then ignore the operation.
+//When removing a student, if the student does not exist, then ignore the operation.
+
+//When adding a course, if the course is already in DB, then ignore the operation.
+//When dropping a course, if the course does not exist, then ignore the operation.
+
+//All courses in a semester need to be sorted.
+//When dropping or adding a course, overall GPA, semester GPA, overall credits and semester credits all need to be updated.
+
+//Semester numbers:  Spring 2019: 20191; Fall 2019: 20192, etc.
+
+void add_student(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*> & DB, int id);
+void remove_student(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int id);
+
+//20171 Spring semester of 2017; 20172: Fall semester of 2017
+//All courses in the list should be sorted according to name (increasing order)
+void add_course(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int semester, int id, course c);
+void drop_course(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int semester, int id, course c);
+
+void print_student_semester_courses(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int semester, int id);
+void print_student_all_courses(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int id);
+
+
+//Implement additional functions such that you can do
+//cout << DB << endl;
+//You might need to implement some overloaded operators in the course class.
+ostream& operator << (ostream& str, const map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*> &DB){
+    if (DB.empty() == 1) {return str;} // if DB is empty ,directly return.
+    str << "DB: " << endl;
+    for (auto &i : DB){
+        str << "ID: " << i.first << endl;
+        str << "Overall GPA: " << get<1>(*i.second) << endl;
+        str << "Overall Credits: " << get<0>(*i.second) << endl;
+        if (get<2>(*i.second) != nullptr) { // if the second map exist, then continue print.
+            auto& M2 = *(get<2>(*i.second)); // M2 is the second map(semester map)
+            if (M2.empty() != 1){ // if map is not empty, visit one by one
+                for(auto &j : M2){
+                    str << "Semester: " << j.first << endl;
+                    str << "GPA:" << setiosflags(ios::fixed) << setprecision(2) << get<1>(j.second) << endl;
+                    str << "Credits: " << get<0>(j.second) << endl;
+                    if (get<2>(j.second) != nullptr){ // if the list is exist, then continue print
+                        auto L = *(get<2>(j.second)); // L is the list of *course
+                        for (course* k : L)
+                        {
+                            str << (*k) << " "; // print it one by one. need to overloading << DB first.
+                        }
+                        if(L.size()!=0){str << endl;} // avoid the blank line if there is no course in list when printing.
+                    }
+                }
+            }
+        }
+    }
+    str << endl;
+    return str;
+}
+
+int main() {
+    map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> > *> *>  DB;
+
+    add_student(DB, 11111);
+    course C1("CIS554", 1, 3, "A-"), C2("CSE674", 1, 3, "B+"), C3("MAT296", 8, 4, "A"), C4("WRT205", 5, 3, "A");
+
+    add_course(DB, 20171, 11111, C1);
+    add_course(DB, 20172, 11111, C1);
+    add_course(DB, 20171, 11111, C4);
+    add_course(DB, 20171, 11111, C3);
+    add_course(DB, 20171, 11111, C2);
+    print_student_semester_courses(DB, 20171, 11111);
+
+    drop_course(DB, 20171, 11111, C1);
+//    print_student_semester_courses(DB, 20171, 11111); //sorted according to course name
+    print_student_all_courses(DB, 11111);//ID GPA
+    drop_course(DB, 20171, 11111, C2);
+//    print_student_semester_courses(DB, 20171, 11111); //sorted according to course name
+    print_student_all_courses(DB, 11111);//ID GPA
+    drop_course(DB, 20171, 11111, C3);
+//    print_student_semester_courses(DB, 20171, 11111); //sorted according to course name
+    print_student_all_courses(DB, 11111);//ID GPA
+    drop_course(DB, 20171, 11111, C4);
+//    print_student_semester_courses(DB, 20171, 11111); //sorted according to course name
+    print_student_all_courses(DB, 11111);//ID GPA
+
+
+    course C5("CIS351", 2, 3, "A-"), C6("PSY205", 5, 3, "B+"), C7("MAT331", 2, 3, "A"), C8("ECN203", 4, 3, "A");
+    add_course(DB, 20172, 11111, C5);
+    add_course(DB, 20172, 11111, C6);
+    add_course(DB, 20172, 11111, C7);
+    add_course(DB, 20172, 11111, C8);
+    add_course(DB, 20172, 11111, C3);
+    print_student_semester_courses(DB, 20172, 11111);
+    print_student_all_courses(DB, 11111);//ID GPA
+
+    add_student(DB, 11112);
+    add_course(DB, 20171, 11112, C2);
+    add_course(DB, 20171, 11112, C5);
+    add_course(DB, 20171, 11112, C7);
+    add_course(DB, 20171, 11112, C4);
+    print_student_semester_courses(DB, 20171, 11112);
+
+    add_course(DB, 20172, 11112, C8);
+    add_course(DB, 20172, 11112, C3);
+    add_course(DB, 20172, 11112, C5);
+    add_course(DB, 20172, 11112, C1);
+    print_student_semester_courses(DB, 20172, 11112);
+
+    print_student_all_courses(DB, 11112);
+
+    cout << DB << endl;
+    remove_student(DB, 11111);
+    remove_student(DB, 11112);
+    cout << DB << endl;
+//    getchar(); //read character from stdio stream, equal to "getc(stdin", it will get a char form stdin. return type is int(ASCII code),return -1 if error.
+//    getchar();
+    return 0;
+}
+
+
+//When adding a student, if the student is already in DB, then ignore the operation.
+//steps:
+//if the student already exist, then return.
+//add student ID to map1, create a tuple1 whose address reserved in map1.second.
+void add_student(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*> & DB, int id) {
+    if (DB.find(id) != DB.end()){return;} // if the student is already in DB, then ignore the operation
+    auto it1 = new tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>; //add student ID to map1, create a tuple1 whose address reserved in map1.second.
+    DB[id] = it1; // put tuple's address in map1.second
+    return;
+}
+
+//When removing a student, if the student does not exist, then ignore the operation.
+//steps:
+//if the student is not in DB, then directly return.
+//if the student  have second(semester) map, continue visiting.
+//for each semester in map2, if the student  have list, continue visiting.
+//else:
+//delete the pointer of course.
+//clear list and delete the pointer of list of course*.
+//clear map and delete the pointer of map2.
+//delete the pointer of tuple1.
+//delete the student item from DB.
+void remove_student(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int id) {
+    if (DB.find(id) == DB.end()){return;} //if the student does not exist, then ignore the operation.
+
+    if (get<2>(*(DB[id])) != nullptr) { //if the student doesn't have second(semester) map, delete tuple1, delete item in map1, return.
+        auto& M2 = *(get<2>(*(DB[id])));
+        for (auto &i : M2){
+            if(get<2>(i.second) != nullptr){
+                auto& L = *(get<2>(i.second));
+                for (auto j : L){ //delete the pointer of list of course*.
+                    delete j;
+                }
+                L.clear();
+                delete get<2>(i.second); // delete list
+            }
+        }
+        M2.clear();
+        delete get<2>(*(DB[id]));//delete the pointer of map2
+    }
+    delete DB[id]; //delete the pointer of tuple1.
+    auto it = DB.find(id); //delete the student item from DB.
+    if(it == DB.end()) {return;}
+    DB.erase(it);
+}
+
+
+//When adding a course, if the course is already in DB, then ignore the operation.
+//steps:
+//check the id, if the student is not in DB,then directly return.
+//check if the second map is exist,if not create a new one.
+//visit every item in map2, if the course is already exist, then return.
+//---after sure that course is not in DB, add it.
+//check if the semester is already in DB, if not, create a new one.
+//add course to corresponding semester.
+void add_course(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int semester, int id, course c) {
+    if (DB.find(id) == DB.end()){ return; } //check the id, if the student is not in DB,then directly return.
+
+    if (get<2>(*(DB[id])) == nullptr){ //check if the second map is exist,if not create a new one
+        auto it1 = new map< int, tuple< int, float, list<course*> *> >; // create pointer
+        get<2>(*(DB[id])) = it1; //put the pointer at tuple1's third element
+    }
+    auto& M2 = *(get<2>(*(DB[id]))); // M2: semester map //visit every item in map2, if the course is already exist, then return.
+    for(auto &i : M2){
+        if(get<2>(i.second) != nullptr){
+            auto& L = *(get<2>(i.second)); // L is the list of course*.
+            for (auto j : L){
+                for(auto i : L){
+                    if (*i == c){ return; }  // if course are already in list, return.
+                }
+            }
+        }
+    }
+    //---after sure that course is not in DB, add it.
+    if((M2.empty() == 1) || M2.find(semester) == M2.end())  { // if map is empty or the semester is not in the map, then create a list and add it to the map2, key is semester.
+        auto it2 = new list<course*>;//create a list of course*, whose address reserved in get<2>(map2.second).
+        (get<2>(M2[semester])) = it2;
+    }
+    auto& L = *(get<2>(M2[semester]));
+    //add course
+    L.push_back(new course(c));
+    get<0>(M2[semester]) += c.credits; // semester credit addition.
+    get<0>(*DB[id]) += c.credits; // overall credit addition.
+    //Semester GPA calculate.
+    float score = 0; // convert level to score.
+    if ( c.grade == "A") {
+        score = 4.00;
+    } else if (c.grade == "A-"){
+        score = 3.67;
+    }else if (c.grade == "B+"){
+        score = 3.33;
+    }else if (c.grade == "B"){
+        score = 3.00;
+    }else if (c.grade == "B-"){
+        score = 2.67;
+    }else if (c.grade == "C+"){
+        score = 2.33;
+    }else if (c.grade == "C"){
+        score = 2.0;
+    }else if (c.grade == "C-"){
+        score = 1.67;
+    }
+    get<1>(M2[semester]) = ((get<1>(M2[semester]))*(L.size()-1)+ score)/(float)(L.size());
+    //Overall GPA calculate.
+    //already calculating all the semester's GPA, so for overall GPA, only need to visit all semester in map2, add all the (semester GPA* L.size)
+    //then get the whole length of all list
+    //do division
+    float allGPA = 0;
+    int size = 0;
+    for (auto& i : M2){
+        if(get<2>(M2[semester]) != nullptr && L.size() != 0){
+            allGPA += ((float)(L.size())) * (get<1>(M2[semester]));
+            size += L.size();
+        }
+        get<1>(*(DB[id])) = allGPA/((float)size);
+    }
+    L.sort(compare); // sorting the course according to course.name
+    return;
+}
+
+
+//When dropping a course, if the course does not exist, then ignore the operation.
+//steps:
+// if the student is not in DB, return.
+// if the student has not map2(semester map) or don't have the semester, return.
+// if the student don't have this course, return.
+// delete this course.
+void drop_course(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int semester, int id, course c) {
+    if (DB.find(id) == DB.end()) { return;} // // if the student is not in DB, return.
+    if (get<2>(*(DB[id])) == nullptr) {return;} // if student don't have map2, return.
+    auto& M2 = *(get<2>(*(DB[id]))); //M2:semester's map.
+    if(M2.find(semester) == M2.end()) { return;} // if the student don't have the semester, return.
+
+    auto & L = *(get<2>(M2[semester]));
+    for (auto i : L){
+        if (*i == c){ //delete this course.
+            get<0>(M2[semester]) -= c.credits; // semester credit addition.
+            get<0>(*DB[id]) -= c.credits; // overall credit addition.
+            float score = 0; // recalculate semester's GPA.
+            if ( c.grade == "A") {
+                score = 4.00;
+            } else if (c.grade == "A-"){
+                score = 3.67;
+            }else if (c.grade == "B+"){
+                score = 3.33;
+            }else if (c.grade == "B"){
+                score = 3.00;
+            }else if (c.grade == "B-"){
+                score = 2.67;
+            }else if (c.grade == "C+"){
+                score = 2.33;
+            }else if (c.grade == "C"){
+                score = 2.0;
+            }else if (c.grade == "C-"){
+                score = 1.67;
+            }
+            get<1>(M2[semester]) = ((get<1>(M2[semester]))*((float)L.size())- score)/((float)(L.size()-1));
+            //overall GPA recalculate.
+            float ALLGPA = 0;
+            int size = 0;
+            for (auto& i : M2){
+                if(get<2>(M2[semester]) != nullptr && L.size() != 0){
+                    ALLGPA += (float)(L.size())*(get<1>(M2[semester]));
+                    size += L.size();
+                }
+                get<1>(*(DB[id])) = ALLGPA/((float)size);
+            }
+            //delete course and delete item in list.
+            //delete i;
+            //L.remove(i);
+		list<course*>::iterator it;
+            for (it = L.begin(); it !=L.end(); it++){
+                if (**it==c){
+                    delete *it;
+                    L.erase(it);
+                }
+            }
+            if((*(get<2>(M2[semester]))).size()==0) {get<1>(M2[semester])= 0;} // if the list is already become zero, then reset the GPA of this semester. or something funny will happend.
+            //if M2 is empty or all the semester's list is empty, reset GPA to 0.00. this will check if all the list is empty
+            bool temp = 0;
+            if(M2.empty() == 1) {
+                get<1>(*(DB[id])) = 0;
+            }else{
+                for(auto& i : M2){
+                    if((*(get<2>(i.second))).size() != 0 ){
+                        temp = 1;
+                        break;
+                    }
+                }
+            }
+            if (temp == 0){ get<1>(*(DB[id])) = 0; return;} //if M2 is empty or all the semester's list is empty, reset GPA to 0.00
+        }else{ // if the student don't have this course, return.
+            return;
+        }
+    }
+}
+
+//steps:
+//if student is not in DB, return.
+//if the map2 is not exist or empty, return.
+//if the semester is not in DB, return.
+//print course.
+void print_student_semester_courses(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int semester, int id) {
+    if (DB.find(id) == DB.end()) { return;} //if student is not in DB, return.
+    if (get<2>(*DB[id]) == nullptr) {return;} //if the map2 is not exist,return.
+    auto& M2 = *(get<2>(*DB[id]));//M2:semester's map.
+    if (M2.empty() == 1) {return;} //if the map2 is empty,return.
+    if (M2.find(semester) == M2.end()) { return; } // if the student don't have the semester, return.
+    auto & L = *(get<2>(M2[semester]));
+    cout << "ID: " << id << endl;
+    cout << "Semester: " << semester << endl;
+    cout << "GPA: " << setiosflags(ios::fixed) << setprecision(2) << get<1>(M2[semester]) << endl;
+    cout << "Credits: " << get<0>(M2[semester]) << endl;
+    for (auto i: L){
+        cout << *i << " ";
+    }
+    cout << endl;
+    cout << endl;
+}
+
+//steps:
+//if student not exist in DB, return.
+//print Overall GPA
+//print Overall Credits
+//if the student don't have second map(semester map) or map is empty, them return.
+//loop: visit all the semester in map.
+//for each semester, if it's list is valid and there are items in list, then them.
+//print all the course by loop.
+void print_student_all_courses(map<int, tuple<int, float, map<int, tuple<int, float, list<course*>*> >*>*>& DB, int id) {
+    if (DB.find(id) == DB.end()) { return;} //if student is not in DB, return.
+    cout << "ID: " << id << endl;
+    cout << "Overall GPA: " << setiosflags(ios::fixed) << setprecision(2) << get<1>(*DB[id]) << endl; //print Overall GPA
+    cout << "Overall Credits: " << get<0>(*DB[id]) << endl; //print Overall Credits
+    if (get<2>(*DB[id]) == nullptr) {return;} //if the student don't have second map(semester map), them return.
+    auto& M2 = *(get<2>(*DB[id]));
+    if(M2.empty() == 1) {return;} //if the student's semester map is empty, them return.
+    for (auto &i : M2) {
+        cout << "Semester: " << i.first << endl;
+        cout << "GPA: " << setiosflags(ios::fixed) << setprecision(2) << get<1>(i.second) << endl;
+        cout << "Credits: " << get<0>(i.second) << endl;
+        if(get<2>(i.second) != nullptr) { //for each semester, if it's list is valid and there are items in list, then print them.
+            auto & L = *(get<2>(i.second));
+            if (L.empty() != 1){
+                for(auto j : L){
+                    cout << *j << " ";
+                }
+                cout << endl;
+            }
+        }
+    }
+    cout << endl;
+}
+
+
+
+
+
+
+

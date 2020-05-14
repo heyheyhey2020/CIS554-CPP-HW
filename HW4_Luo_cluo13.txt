@@ -1,0 +1,530 @@
+//HW4 by Can Luo
+//SU Net ID: cluo13  SUID: 9431393361
+
+//HW4 Due: Friday March 6 at 11:59pm
+#include <iostream>
+#include <list>
+#include <string>
+#include <cmath>
+
+using namespace std;
+
+//class ThreeD
+template <class T> class ThreeD {
+public:
+    T ht;
+    T wid;
+    T dep;
+    ThreeD() :ht(0), wid(0), dep(0) {}
+    ThreeD(T i, T j, T k) :ht(i), wid(j), dep(k) {}
+    T getVol() const { return ht * wid * dep; }
+    bool operator==(const ThreeD<T>& t) { return getVol() == t.getVol(); }
+    bool operator!=(const ThreeD<T>& t) { return getVol() != t.getVol(); }
+};
+
+// operator << overloading
+template <class T> ostream& operator<<(ostream& s, const ThreeD<T>& D){
+    s << "(" << D.ht << ", " << D.wid << ", " << D.dep << ")";
+    return s;
+}
+
+
+
+
+//class doublylinkedlist
+template <class T> class node {
+public:
+    T value;
+    node<T>* next;
+    node<T>* previous;
+    node<T>() { next = nullptr; previous = nullptr; }
+    node<T>(T v) { value = v; next = nullptr; previous = nullptr; }
+    bool operator==(const node<T>& t) const { return value == t.value; }
+    bool operator!=(const node<T>& t) const { return value != t.value; }
+};
+
+template <class T> class linked_list {
+public:
+    node<T>* head;
+    node<T>* tail;
+    linked_list() { head = tail = nullptr; }
+    linked_list(const initializer_list<T>& V);
+
+    void push_back(T t);
+    bool operator==(const linked_list<T>& L) const;
+    bool operator!=(const linked_list<T>& L) const;
+
+    linked_list(const linked_list<T>& L); //copy constructor
+    linked_list(linked_list<T>&& L); //move constructor
+    ~linked_list();//destructor
+    void operator=(const linked_list<T>& L);//L-value operator=
+    void operator=(linked_list<T>&& L);//R-value operator=
+    //template <class T> friend ostream& operator<<(ostream& s, const linked_list<T>& L);
+};
+
+//doublylinkedlist-initializer_list function
+template <class T> linked_list<T>::linked_list(const initializer_list<T>& V) : linked_list() {
+    head = nullptr;
+    auto it = V.begin();
+    while (it != V.end()) {
+        push_back(*it);
+        it++;
+    }
+//    cout << "linkedlist initializer_list" << endl;
+}
+
+//destructor
+template <class T> linked_list<T>::~linked_list() {  //destructor
+    while (head) {
+        node<T>* p = head->next;
+        delete head;
+        if(p!= nullptr) {p->previous = nullptr;}
+//        if(p != tail){delete p->previous;} // can't re-delete a pointer that is already been free, but it need to point to nullptr.
+//        else{delete tail;}
+        head = p;
+    }
+//    cout << "linkedlist destructor" << endl;
+}
+
+//copy constructor
+template <class T> linked_list<T>::linked_list(const linked_list<T>& L) : linked_list() { //copy constructor																			  																		  //num_nodes = 0;
+    node<T>* p = L.head;
+    while (p) {
+        push_back(p->value);
+        p = p->next;
+    }
+//    cout << "linkedlist copy constructor" << endl;
+}
+
+//move constructor
+template <class T> linked_list<T>::linked_list(linked_list<T>&& L) {//move constructor
+    head = L.head;
+    L.head = nullptr;
+}
+
+
+//L-value operator=
+template <class T> void linked_list<T>::operator=(const linked_list<T>& L) { //L=value operator=
+    while (head) {
+        node<T>* p = head->next;
+        delete head;
+        if(p!= nullptr) {p->previous = nullptr;}
+        head = p;
+    }
+    node<T>* p1 = L.head;
+    while (p1) {
+        push_back(p1->value);
+        p1 = p1->next;
+    }
+//    ~linked_list();
+//    linked_list();
+//    cout << "linkedlist L=value operator=" << endl;
+
+}
+
+
+//R-value operator
+template<class T> void linked_list<T>::operator=(linked_list<T>&& L) {//R-value operator=
+    while (head) {
+        node<T>* p = head->next;
+        delete head;
+        if(p!= nullptr) {p->previous = nullptr;}
+        head = p;
+    }
+    head = L.head;
+    L.head = nullptr;
+}
+
+//push_back function
+template <class T> void linked_list<T>::push_back(T t)
+{
+    node<T>* p = new node<T>(t);
+    if (head == nullptr) { head = tail = p; }
+    else {
+        p->previous = tail;
+        tail->next = p;
+        tail = p;
+    }
+}
+
+
+//Two linkes lists are equal if they have same number of nodes
+//and their respective node values are all equal
+template <class T> bool linked_list<T>::operator==(const linked_list<T>& L) const {
+
+    if ((head == nullptr)&&(L.head == nullptr)){return true;} //if both are nullptr, they are the same, return true.
+    if ((head == nullptr)||(L.head == nullptr)){return false;} //if one of the linkedlist is nullptr, directly return false.
+    //if their size is different, directly return.
+    int size1 = 0;
+    int size2 = 0;
+    auto p1 = head;
+    auto p2 = L.head;
+    while(p1){
+        size1++;
+        p1 = p1->next;
+    }
+    while(p2){
+        size2++;
+        p2 = p2->next;
+    }
+    if(size1!=size2){return false;}
+    //compare value of each node one by one, if difference occur, directly return false, else true.
+    p1 = head;
+    p2 = L.head;
+    while(p1){
+        if( p1->value != p2->value) {return false;}
+        p1 = p1->next;
+        p2 = p2->next;
+    }
+    return true;
+}
+
+template <class T> bool linked_list<T>::operator!=(const linked_list<T>& L) const {
+    bool temp = (*this == L);
+    return !temp;
+}
+
+// operator<< overloading for output.
+template <class T> ostream& operator<<(ostream& s, const linked_list<T>& L){
+    auto p = L.head;
+    while(p){
+        s << "[" << p->value << " " << "]";
+        p = p->next;
+    }
+    return s;
+}
+
+
+
+
+template <class T> class Node {
+public:
+    T value;
+    Node<T>* l_child;
+    Node<T>* r_child;
+    Node() : l_child(nullptr), r_child(nullptr){}
+    Node(T i) :value(i), l_child(nullptr), r_child(nullptr) {}
+    bool operator==(const Node<T>& n) const { return value == n.value; }
+    bool operator!=(const Node<T>& n) const { return value != n.value; }
+};
+
+//For implementing the member functions of class Tree,
+//you are allowed to create extra recursive member functions
+//to be called by the member functions that you are required to implement
+template <class T> class Tree { //an n-level full binary tree of 2^n - 1 nodes
+public:
+    Node<T>* root;
+
+    Tree() : root(nullptr) {}
+
+    Tree(const initializer_list<T>& I);
+    Node<T>* makeTree(int n);
+    void Tree_init_help(initializer_list<T> L, int* i,Node<T>* p);
+
+    Tree(const Tree<T>& t);//copy constructor
+    void convert_list(const Node<T>* p, list<T> &L);
+    void Tree_copy_help(list<T> L, int* i, Node<T>* p);
+    void operator=(const Tree<T>& t);//L-value operator=
+
+    Tree<T> Three_Times();
+    void ThreeT_help(Node<T>* p);
+    Tree(Tree<T>&& t); //move constructor
+    void operator=(Tree<T>&& t);//R-value operator=
+
+    ~Tree(); //destructor
+    void destru_help(Node<T>* p);
+
+    bool operator==(const Tree<T>& t);
+    bool equal_help(Node<T>* p1,Node<T>* p2);
+    Node<T>* find(Node<T>* p, const T& v);
+    void Tfind_help(Node<T>* p, const T& v, Node<T>** preturn);
+
+
+    void const printT(ostream& str, const Node<T>* p);
+
+};
+
+
+//steps:
+//calculate the layer according to Nodes number.
+//create a tree according to the layers.
+//assign value for each Nodes.
+template <class T> Tree<T>::Tree(const initializer_list<T>& I) :Tree() {
+    if (I.size()==0) {return;} // if initialize list is empty, directly return.
+
+    int layer = 0; // calculate layer for this list.
+    int sum = 0;
+    while(true){
+        sum += pow(2,layer);
+        layer++;
+        if(sum == I.size()){break;}
+    }
+    auto p = makeTree(layer);//create a tree according to the layers.
+    root = p;//
+    int* i = new int{ 0 };
+    if (I.size() > 0) {
+        Tree_init_help(I, i, p);
+    }
+    cout << "Tree::initializer list" << endl;
+}
+
+template <class T> Node<T>* Tree<T>::makeTree(int n) {
+    //Create an n-level full binary tree without initial values
+    auto p = new Node<T>;
+    if (n == 1) { return p; } // base case for recursion: if n is one, then create a node and return pointer.
+    p->l_child = makeTree(n-1);
+    p->r_child = makeTree(n-1);
+    return p;
+
+}
+//assign value to the empty tree.
+template <class T> void Tree<T>::Tree_init_help(initializer_list<T> L, int* i, Node<T>* p) { //reference on HW2's materials.
+        if (p) {
+            Tree_init_help(L, i, p->l_child);
+            p->value = *(L.begin() + (*i));
+//            auto it = L.begin();
+//            for(int j = 0; j < *i; j++){
+//                it++;
+//            }
+//            p->value = *it;
+            *i = *i + 1;
+            Tree_init_help(L,i,p->r_child);
+        }
+}
+
+
+template <class T> Tree<T>::Tree(const Tree<T>& t)//copy constructor
+{
+    if(t.root == nullptr) {return;} // if t is a null tree, return.
+    list<T> L;
+    convert_list(t.root,L);
+
+    int layer = 0; // calculate layer for this list.
+    int sum = 0;
+    while(true){
+        sum += pow(2,layer);
+        layer++;
+        if(sum == L.size()){break;}
+    }
+    auto p = makeTree(layer);
+    root = p;//
+    int* i = new int{ 0 };
+    if (L.size() > 0) {
+        Tree_copy_help(L, i, p);
+    }
+    cout << "Tree::copy constructor" << endl;
+}
+
+template <class T> void Tree<T> :: convert_list(const Node<T>* p, list<T>& L){
+    if(p){
+        convert_list(p->l_child,L);
+        L.push_back(p->value);
+        convert_list(p->r_child,L);
+    }
+    return;
+}
+
+template <class T> void Tree<T>::Tree_copy_help(list<T> L, int* i, Node<T>* p) { //reference on HW2's materials.
+    if (p) {
+        Tree_copy_help(L, i, p->l_child);
+        auto it = L.begin();
+        for(int j = 0; j < *i; j++){
+            it++;
+        }
+        p->value = *it;
+        *i = *i + 1;
+        Tree_copy_help(L,i,p->r_child);
+    }
+}
+
+template <class T> void Tree<T>::operator=(const Tree<T>& t) { //L-value operator=
+    destru_help(this->root);
+    if(t.root == nullptr) {return;} // if t is a null tree, return.
+    list<T> L;
+    convert_list(t.root,L);
+
+    int layer = 0; // calculate layer for this list.
+    int sum = 0;
+    while(true){
+        sum += pow(2,layer);
+        layer++;
+        if(sum == L.size()){break;}
+    }
+    auto p = makeTree(layer);
+    root = p;//
+    int* i = new int{ 0 };
+    if (L.size() > 0) {
+        Tree_copy_help(L, i, p);
+    }
+    cout << "Tree::L-value Operator=" << endl;
+}
+
+
+template <class T> Tree<T>::Tree(Tree<T>&& t) { //Move constructor
+    root = t.root;
+    t.root = nullptr;
+    cout << "Tree::move constructor" << endl;
+}
+
+template <class T> void Tree<T>::operator=(Tree<T>&& t) {
+    destru_help(this->root);
+    root = t.root;
+    t.root = nullptr;
+    cout << "Tree::R-value operator=" << endl;
+}
+
+template <class T> Tree<T> Tree<T>::Three_Times() {
+    //Return a tree which has the same number of nodes as the current tree and
+    //all node values are three times of that of the current tree.
+    Tree<T> temp = *this;
+    ThreeT_help(temp.root);
+    return temp;
+
+}
+template <class T> void Tree<T>::ThreeT_help(Node<T>* p){
+    if(p== nullptr) {return;}
+    ThreeT_help(p->l_child);
+    p->value *= 3;
+    ThreeT_help(p->r_child);
+}
+
+
+
+template <class T> Tree<T>::~Tree() { //destructor
+    destru_help(this->root);
+    cout << "Tree::destructor" << endl;
+}
+
+template <class T> void Tree<T>::destru_help(Node<T>* p){
+    if(p== nullptr) {return;}
+    while(p){
+        destru_help(p->l_child);
+        destru_help(p->r_child);
+        delete p;
+        p = nullptr;
+    }
+}
+
+
+
+
+
+
+
+template <class T> bool Tree<T>::operator==(const Tree<T>& t) {
+    return equal_help(root,t.root);
+}
+
+template <class T> bool Tree<T>::equal_help(Node<T>* p1,Node<T>* p2){
+    if(p1 == nullptr && p2 == nullptr){return true;}
+    if(p1== nullptr || p2 == nullptr || p1->value != p2->value){
+        return false;
+    }else{
+        return equal_help(p1->l_child,p2->l_child) && equal_help(p1->r_child,p2->r_child);
+    }
+}
+
+
+
+template <class T> Node<T>* Tree<T>::find(Node<T>* p, const T& v) {
+    //Return the pointer to a node whose value is equal to v
+    auto ptr = new Node<T>* {nullptr};
+    Tfind_help(p,v,ptr);
+    return *ptr;
+
+}
+
+template <class T> void Tree<T>::Tfind_help(Node<T>* p, const T& v, Node<T>** preturn ){
+    if(p== nullptr) {return;}
+    Tfind_help(p->l_child,v,preturn);
+    if(p->value == v) {
+        *preturn = p;
+    }
+    Tfind_help(p->r_child,v,preturn);
+}
+
+
+
+
+//You can create extra recursive function, to be called by the following function.
+//create a function that recursively return the value of each Nodes.
+//print out each returned value.
+template <class T> ostream& operator<<(ostream& str, /*const*/ Tree<T>& t) { //in-order printing
+    if (t.root == nullptr) {return str;}
+    str << "{";
+    t.printT(str,t.root);
+    str << "}";
+    return str;
+}
+template <class T> void const Tree<T>::printT(ostream& str, const Node<T>* p) { //in-order printing
+    if (p == nullptr) return;
+    printT(str, p->l_child);
+    str << p->value << " ";
+    printT(str, p->r_child);
+}
+
+
+
+int main() {
+    Tree<int> T3{ 1,2,3, 4, 5, 6, 7 };
+    cout << T3 << endl;
+    Tree<int> T4{ T3 };
+    cout << T4 << endl;
+    Tree<int> T5;
+    T5 = T4;
+    cout << T5 << endl;
+    Tree<int> T6;
+    T6 = T3.Three_Times();
+    cout << T6 << endl;
+
+    Tree<linked_list<ThreeD<int>>> T7{ {{3,4,5},{7,1,4},{6,7,3}},{{8,4,2},{8,8,2}}, {{9,5,4},{10,3,2},{7,9,1},{2,2,3}} };
+    cout << T7 << endl;
+    linked_list<ThreeD<int>> L1{ {2,18,5},{10,3,2},{7,9,1},{3,1,4} };
+    Node<linked_list<ThreeD<int>>>* p1 = T7.find(T7.root, L1);
+    cout << p1->value << endl;
+
+    Tree<linked_list<ThreeD<int>>> T8{ {{5,4,3},{7,2,2},{7,6,3}},{{8,4,2},{8,2,8}}, {{9,2,10},{10,3,2},{7,3,3},{2,2,3}} };
+    if (T7 == T8) cout << "EQUAL" << endl;
+    else cout << "NOT EQUQL" << endl;
+
+
+    Tree<linked_list<ThreeD<int>>>* p2 = new Tree<linked_list<ThreeD<int>>>
+            { {{3,4,5},{7,1,4},{6,7,3}},{{8,4,2},{8,8,2}}, {{9,5,4},{10,3,2},{7,9,1},{2,2,3}} };
+    cout << *p2 << endl;
+    delete p2;
+    return 0;
+}
+
+/*
+//Sample Screenshot
+
+Tree::initializer list
+{ 1 2 3 4 5 6 7 }
+Tree::copy constructor
+{ 1 2 3 4 5 6 7 }
+Tree::L - value Operator =
+{ 1 2 3 4 5 6 7 }
+Tree::copy constructor
+Tree::move constructor
+Tree::destructor
+Tree::R - value operator=
+Tree::destructor
+{ 3 6 9 12 15 18 21 }
+Tree::initializer list
+{ [(3, 4, 5) (7, 1, 4) (6, 7, 3)] [(8, 4, 2) (8, 8, 2)] [(9, 5, 4) (10, 3, 2) (7, 9, 1) (2, 2, 3)] }
+[(9, 5, 4) (10, 3, 2) (7, 9, 1) (2, 2, 3)]
+Tree::initializer list
+EQUAL
+Tree::initializer list
+{ [(3, 4, 5) (7, 1, 4) (6, 7, 3)] [(8, 4, 2) (8, 8, 2)] [(9, 5, 4) (10, 3, 2) (7, 9, 1) (2, 2, 3)] }
+Tree::destructor
+Tree::destructor
+Tree::destructor
+Tree::destructor
+Tree::destructor
+Tree::destructor
+Tree::destructor
+
+*/
+
+
