@@ -1,0 +1,223 @@
+//HW1 by Can Luo
+////SU Net ID: cluo13  SUID: 9431393361
+
+//HW1: Due 11:59pm, Monday, January 27.
+//Implement the three member functions new_reverse, new_sort and removeAll.
+
+//Linked List Operations
+#include <iostream> //cin and cout
+using namespace std;
+
+class Node {
+public:
+    int value;
+    Node* next;
+    Node() { next = nullptr; } //default constructor
+    Node(int i) { value = i; next = nullptr; } //constructor
+};
+
+class LinkedList {
+public:
+    Node* head;
+    LinkedList() { head = nullptr; }
+
+    void makeList(int m, int n);//create a linked list of m nodes with values randomly distributed in 0..n-1
+    void printList();
+    void new_reverse(); //You are only allowed to modify "values" of nodes, but not "next"
+    //You have to directly work on the linked list.  You are not allowed to use
+    //external structures such as array or linked list to perform operations.
+    void new_sort();    //Sorting -- Only modify pointers (next or temporary pointers).
+    //Changes of values of nodes are not allowed.
+    //You are not allowed to use external structures such as array or linked list
+    //to perform operations and transfer the values back to the linked list.
+    void removeAll(int k);//Remove all nodes with value k.
+};
+
+void LinkedList::makeList(int m, int n) {
+    for (int i = 0; i < m; i++) {
+        Node* p = new Node(rand() % n);
+        //Node* p = new Node(14);
+        p->next = head;
+        head = p;
+    }
+}
+
+void LinkedList::printList() {
+    Node* p = head;
+    cout << endl;
+    while (p) { cout << p->value << " ";  p = p->next; }
+}
+
+void LinkedList::new_reverse() {
+    if (!head || !head->next) return;    // if 0 node or 1 node, return.
+
+    Node* p1 = head;
+    int len = 0;    //calculate the how many nodes the linked list have.
+    while (p1)
+    {
+        len++;
+        p1 = p1->next;
+    }
+    //cout << endl << len;
+
+    int times = len / 2;
+    int count = len - 1;
+    int temp;
+    Node* ptr1 = head;  //record the node needed to be exchanged at front.
+    Node* ptr2 = head;  //help to move ptr3.
+    Node* ptr3 = nullptr;   //record the node needed to be exchanged at back.
+    while (times) {
+        for (int i = 0; i < count; i++) {//find the corresponding ptr3 for each ptr1.
+            ptr3 = ptr2->next;
+            ptr2 = ptr2->next;
+        }
+        //cout << endl << ptr3->value;
+
+        // exchange value
+        temp = ptr1->value;
+        ptr1->value = ptr3->value;
+        ptr3->value = temp;
+
+        times--;
+        count--;
+
+        ptr1 = ptr1->next;
+        ptr2 = head;
+
+    }
+
+}
+
+void LinkedList::new_sort() {
+
+    //selection sort - change by pointer
+    //(1)p1 pointed to each node in linked list, and move to next node each iteration.
+    //(1)find the minimum number for each iteration -- pointed by p_min.
+    //(2)exchange change p1 pointed node and p_min pointed node -- p1_pre & p_min_pre & original p_min location.
+    // situation 1: p1 and p_min are adjacent nodes.
+    // (1) p1 is head node
+    // (2) p1 is not head node
+    //situation 2: p1 and p_min are not adjacent nodes.
+    // (1) p1 is head node
+    // (2) p1 is not head node
+
+    if (!head || !head->next) return; // return if only has 0 or 1 node.
+
+    Node* p1 = head;
+    Node* p2 = p1;
+
+    Node* p1_pre = head; // used to record p1's previous node.
+
+    Node* p3 = p1; // changed like p2 except always located before p2. -- used to track p_min_pre pointer.
+    Node* p_min_pre = nullptr; // used to record p_min's previous node.
+
+    Node* p_min_nxt = nullptr; // used to record original p_min's next node.
+    Node* p4 = head; // used to control outer iteration.
+
+
+    int min;
+    Node* p_min;
+
+    while (p4) {
+        //printList();
+        p1 = p4;
+        p4 = p4->next;
+        min = p1->value;
+        p_min = p1;
+        p3 = p1;
+        p2 = p1->next;
+
+        while (p2) {
+            if (p2->value < min) {
+                min = p2->value;
+                p_min = p2;
+                p_min_pre = p3;
+            }
+            p3 = p3->next;
+            p2 = p2->next;
+        }
+        p_min_nxt = p_min->next;
+
+        if (p_min->value == p1->value) {//if p1 is the minimum node, no need to exchange.
+
+            p1_pre = p_min;
+            continue;
+        }
+
+
+        // the nodes needed to be exchanged are adjacent
+        if (p1->next == p_min) {
+            if (p1 == head) // if p1 is head
+            {
+                head = p_min;
+                p_min->next = p1;
+                p1->next = p_min_nxt;
+            }
+            else { // if p1 is not head
+                p1_pre->next = p_min;
+                p_min->next = p1;
+                p1->next = p_min_nxt;
+            }
+        }
+        else { // the nodes needed to be exchanged are not adjacent.
+            if (p1 == head) // if p1 is head
+            {
+                head = p_min;
+                p_min->next = p1->next;
+                p_min_pre->next = p1;
+                p1->next = p_min_nxt;
+            }
+            else { // if p1 is not head
+                p1_pre->next = p_min;
+                p_min->next = p1->next;
+                p_min_pre->next = p1;
+                p1->next = p_min_nxt;
+            }
+        }
+        p1_pre = p_min;
+    }
+}
+
+
+void LinkedList::removeAll(int k) {
+    if (!head) return;//if 0 node in the linked list
+
+    while (head) {
+        if (head->value == k) {
+            head = head->next;
+        }
+        else {
+            break;
+        }
+    }
+    if (head == nullptr) return;
+    Node* p1 = head;
+    Node* p2;
+    while (p1->next) {
+        p2 = p1->next;
+        if (p2->value == k) {
+            p1->next = p2->next;
+            delete p2;
+        }
+        else {//p1 pointer move to next node only if the node is not equal to k.
+            p1 = p2;
+        }
+    }
+}
+
+
+//Different test cases will be used during grading
+//Need to pay special attention to boundary cases
+
+int main() {
+    LinkedList L1;
+    L1.makeList(50, 60);
+    L1.printList();
+    L1.new_reverse();
+    L1.printList();
+    L1.new_sort();
+    L1.printList();
+    L1.removeAll(50);
+    L1.printList();
+    return 0;
+}
